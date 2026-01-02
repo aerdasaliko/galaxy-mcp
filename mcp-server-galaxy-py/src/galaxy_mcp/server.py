@@ -92,7 +92,23 @@ def ensure_connected():
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {
+                "type": ["string", "null"],
+                "description": "",
+                "default": None
+                },
+                "api_key": {
+                "type": ["string", "null"],
+                "description": "",
+                "default": None
+                }
+            },
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -196,7 +212,17 @@ def connect(url: str | None = None, api_key: str | None = None) -> dict[str, Any
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                "type": "string",
+                "description": ""
+                }
+            },
+            "required": ["query"]
+        }
     },
     meta={
         "cacheable": True,
@@ -240,7 +266,22 @@ def search_tools(query: str) -> dict[str, Any]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tool_id": {
+                "type": "string",
+                "description": ""
+                },
+                "io_details": {
+                "type": "boolean",
+                "description": "",
+                "default": False
+                }
+            },
+            "required": ["tool_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -255,18 +296,12 @@ def search_tools(query: str) -> dict[str, Any]:
             "version": {"type": "string", "description": "Tool version string."},
             "description": {"type": "string", "description": "Tool description."},
             "labels": {"type": "array", "items": {"type": "string"}, "description": "List of labels attached to the tool."},
-            "icon": {"type": ["string", "null"], "description": "Icon URL or null."},
             "edam_operations": {"type": "array", "items": {"type": "string"}, "description": "EDAM operation terms."},
             "edam_topics": {"type": "array", "items": {"type": "string"}, "description": "EDAM topic terms."},
-            "hidden": {"type": "string", "description": "Hidden flag, if any."},
             "is_workflow_compatible": {"type": "boolean", "description": "Whether the tool is workflow compatible."},
             "xrefs": {"type": "array", "items": {"type": "object"}, "description": "External references associated with the tool."},
-            "tool_shed_repository": {"type": "object", "description": "Information about the tool shed repository."},
             "inputs": {"type": "array", "items": {"type": "object"}, "description": "List of tool input parameters with metadata."},
-            "outputs": {"type": "array", "items": {"type": "object"}, "description": "List of tool output definitions with metadata."},
-            "panel_section_id": {"type": "string", "description": "Tool panel section ID."},
-            "panel_section_name": {"type": "string", "description": "Tool panel section name."},
-            "form_style": {"type": "string", "description": "Form style used for tool parameters."}
+            "outputs": {"type": "array", "items": {"type": "object"}, "description": "List of tool output definitions with metadata."}
         },
         "required": ["model_class", "id", "name"]
     }
@@ -287,6 +322,8 @@ def get_tool_details(tool_id: str, io_details: bool = False) -> dict[str, Any]:
     try:
         # Get detailed information about the tool
         tool_info = galaxy_state["gi"].tools.show_tool(tool_id, io_details=io_details)
+        for tool in tool_info:
+            ...
         return tool_info
     except Exception as e:
         raise ValueError(
@@ -302,7 +339,17 @@ def get_tool_details(tool_id: str, io_details: bool = False) -> dict[str, Any]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tool_id": {
+                "type": "string",
+                "description": ""
+                }
+            },
+            "required": ["tool_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -364,7 +411,25 @@ def get_tool_citations(tool_id: str) -> dict[str, Any]:
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "history_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "tool_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "inputs": {
+                    "type": "object",
+                    "description": ""
+                }
+            },
+            "required": ["history_id", "tool_id", "inputs"]
+        }
     },
     meta={
         "cacheable": True,
@@ -432,7 +497,12 @@ def run_tool(history_id: str, tool_id: str, inputs: dict[str, Any]) -> dict[str,
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -477,7 +547,17 @@ def get_tool_panel() -> dict[str, Any]:
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "history_name": {
+                "type": "string",
+                "description": ""
+                }
+            },
+            "required": ["history_name"]
+        }
     },
     meta={
         "cacheable": True,
@@ -531,7 +611,20 @@ def create_history(history_name: str) -> dict[str, Any]:
         "readOnlyHint": True,
         "idempotentHint": True,
         "destructiveHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "dataset_type": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": ""
+                }
+            },
+            "required": ["dataset_type"]
+        }
     },
     meta={
         "cacheable": True,
@@ -672,7 +765,12 @@ def filter_tools_by_dataset(dataset_type: list[str]) -> dict[str, Any]:
         "readOnlyHint": True,
         "idempotentHint": True,
         "destructiveHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -683,7 +781,7 @@ def filter_tools_by_dataset(dataset_type: list[str]) -> dict[str, Any]:
         "properties": {
             "url": {"type": "string", "description": "Base URL of the Galaxy server."},
             "version": {"type": "object", "description": "Galaxy server version information."},
-            "config": {"type": "object", "description": "Server configuration details such as branding, URLs, and feature flags."}
+            "config": {"type": "object", "description": "Server configuration details."}
         },
         "required": ["url", "version", "config"]
     }
@@ -743,7 +841,12 @@ def get_server_info() -> dict[str, Any]:
         "readOnlyHint": True,
         "idempotentHint": True,
         "destructiveHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -793,7 +896,28 @@ def get_user() -> dict[str, Any]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": ["integer", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "",
+                    "default": 0
+                },
+                "name": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                }
+            },
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -892,23 +1016,23 @@ def get_histories(
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
         "ttl_seconds": 3600,
     },
     output_schema={
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "id": {"type": "string", "description": "History ID hash."},
-                "name": {"type": "string", "description": "History name."}
-            },
-            "required": ["id", "name"]
-        },
-        "description": "Array of objects containing history IDs and names."
+        "type": "object",
+        "properties": {
+            "id": {"type": "string", "description": "History ID hash."},
+            "name": {"type": "string", "description": "History name."}
+        }
     }
 )
 def list_history_ids() -> list[dict[str, str]]:
@@ -939,7 +1063,17 @@ def list_history_ids() -> list[dict[str, str]]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "history_id": {
+                "type": "string",
+                "description": ""
+                }
+            },
+            "required": ["history_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -1026,7 +1160,47 @@ def get_history_details(history_id: str) -> dict[str, Any]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "history_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "",
+                    "default": 100
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "",
+                    "default": 0
+                },
+                "deleted": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": False
+                },
+                "visible": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": True
+                },
+                "details": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": False
+                },
+                "order": {
+                    "type": "string",
+                    "description": "",
+                    "default": "hid-asc"
+                }
+            },
+            "required": ["history_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -1177,12 +1351,27 @@ def get_history_contents(
 @mcp.tool(
     name="get_job_details",
     description="Retrieve detailed information about the job that created a specific Galaxy dataset.",
-    tags={"galaxy", "jobs", "datasets", "provenance"},
+    tags={"galaxy", "jobs", "datasets"},
     annotations={
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "dataset_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "history_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                }
+            },
+            "required": ["dataset_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -1279,7 +1468,27 @@ def get_job_details(dataset_id: str, history_id: str | None = None) -> dict[str,
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "dataset_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "include_preview": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": True
+                },
+                "preview_lines": {
+                    "type": "integer",
+                    "description": "",
+                    "default": 10
+                }
+            },
+            "required": ["dataset_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -1398,7 +1607,32 @@ def get_dataset_details(
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "dataset_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "file_path": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "use_default_filename": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": True
+                },
+                "require_ok_state": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": True
+                }
+            },
+            "required": ["dataset_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -1562,7 +1796,22 @@ def download_dataset(
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": ""
+                },
+                "history_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                }
+            },
+            "required": ["path"]
+        }
     },
     meta={
         "cacheable": True,
@@ -1639,7 +1888,37 @@ def upload_file(path: str, history_id: str | None = None) -> dict[str, Any]:
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": ""
+                },
+                "history_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "file_type": {
+                    "type": "string",
+                    "description": "",
+                    "default": "auto"
+                },
+                "dbkey": {
+                    "type": "string",
+                    "description": "",
+                    "default": "?"
+                },
+                "file_name": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                }
+            },
+            "required": ["url"]
+        }
     },
     meta={
         "cacheable": True,
@@ -1753,7 +2032,43 @@ def upload_file_from_url(
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "invocation_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "workflow_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "history_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "limit": {
+                    "type": ["integer", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "view": {
+                    "type": "string",
+                    "description": "",
+                    "default": "collection"
+                },
+                "step_details": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": False
+                }
+            },
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -1851,7 +2166,12 @@ def get_manifest_json() -> list[dict[str, Any]]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -1904,7 +2224,17 @@ def get_iwc_workflows() -> dict[str, Any]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                "type": "string",
+                "description": ""
+                }
+            },
+            "required": ["query"]
+        }
     },
     meta={
         "cacheable": True,
@@ -2009,7 +2339,17 @@ def search_iwc_workflows(query: str) -> dict[str, Any]:
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "trs_id": {
+                "type": "string",
+                "description": ""
+                }
+            },
+            "required": ["trs_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -2086,7 +2426,28 @@ def import_workflow_from_iwc(trs_id: str) -> dict[str, Any]:
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "workflow_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "name": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "published": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": False
+                }
+            },
+            "required": []
+        }
     },
     meta={
         "cacheable": True,
@@ -2152,7 +2513,22 @@ def list_workflows(
         "readOnlyHint": True,
         "destructiveHint": False,
         "idempotentHint": True,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "workflow_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "version": {
+                    "type": ["integer", "null"],
+                    "description": "",
+                    "default": None
+                }
+            },
+            "required": ["workflow_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -2207,7 +2583,47 @@ def get_workflow_details(workflow_id: str, version: int | None = None) -> dict[s
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "workflow_id": {
+                    "type": "string",
+                    "description": ""
+                },
+                "inputs": {
+                    "type": ["object", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "params": {
+                    "type": ["object", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "history_id": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "history_name": {
+                    "type": ["string", "null"],
+                    "description": "",
+                    "default": None
+                },
+                "inputs_by": {
+                    "type": "string",
+                    "description": "",
+                    "default": "step_index"
+                },
+                "parameters_normalized": {
+                    "type": "boolean",
+                    "description": "",
+                    "default": False
+                }
+            },
+            "required": ["workflow_id"]
+        }
     },
     meta={
         "cacheable": True,
@@ -2294,7 +2710,17 @@ def invoke_workflow(
         "readOnlyHint": False,
         "destructiveHint": False,
         "idempotentHint": False,
-        "openWorldHint": True
+        "openWorldHint": True,
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "invocation_id": {
+                    "type": "string",
+                    "description": ""
+                }
+            },
+            "required": ["invocation_id"]
+        }
     },
     meta={
         "cacheable": True,
