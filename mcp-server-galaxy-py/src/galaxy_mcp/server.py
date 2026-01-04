@@ -83,10 +83,9 @@ def ensure_connected():
             "Example: connect(url='https://your-galaxy.org', api_key='your-key')"
         )
 
-
 @mcp.tool(
     name="connect",
-    description="Connect to a Galaxy server using a URL and API key. Uses environment variables or a .env file when values are not provided.",
+    description="Establish an authenticated connection to a Galaxy server. URL and API key may be provided explicitly or resolved from environment variables or a .env file.",
     tags={"api", "connection", "auth"},
     annotations={
         "readOnlyHint": False,
@@ -98,12 +97,12 @@ def ensure_connected():
             "properties": {
                 "url": {
                 "type": ["string", "null"],
-                "description": "",
+                "description": "Galaxy server URL. If null, resolves from GALAXY_URL env var.",
                 "default": None
                 },
                 "api_key": {
                 "type": ["string", "null"],
-                "description": "",
+                "description": "Galaxy API key. If null, resolves from GALAXY_API_KEY env var.",
                 "default": None
                 }
             },
@@ -119,27 +118,19 @@ def ensure_connected():
         "properties": {
             "connected": {
                 "type": "boolean",
-                "description": "Whether the connection to Galaxy was successful."
+                "description": "True if API key was validated and current user retrieved."
             },
             "user": {
                 "type": "object",
-                "description": "User information returned by Galaxy if the connection is successful."
+                "description": "User information."
             }
         },
         "required": ["connected", "user"]
     }
 )
 def connect(url: str | None = None, api_key: str | None = None) -> dict[str, Any]:
-    """
-    Connect to Galaxy server
+    """Initialize Galaxy connection."""
 
-    Args:
-        url: Galaxy server URL (optional, uses GALAXY_URL env var if not provided)
-        api_key: Galaxy API key (optional, uses GALAXY_API_KEY env var if not provided)
-
-    Returns:
-        Connection status and user information
-    """
     try:
         # Use provided parameters or fall back to environment variables
         use_url = url or os.environ.get("GALAXY_URL")
@@ -206,7 +197,7 @@ def connect(url: str | None = None, api_key: str | None = None) -> dict[str, Any
 
 @mcp.tool(
     name="search_tools",
-    description="Search Galaxy for tools matching a given name.",
+    description="Search for Galaxy tools by name. Returns all tools whose names match the query string.",
     tags={"tools", "search", "lookup"},
     annotations={
         "readOnlyHint": True,
@@ -218,7 +209,7 @@ def connect(url: str | None = None, api_key: str | None = None) -> dict[str, Any
             "properties": {
                 "query": {
                 "type": "string",
-                "description": ""
+                "description": "Search string used to filter tool names."
                 }
             },
             "required": ["query"]
@@ -233,26 +224,22 @@ def connect(url: str | None = None, api_key: str | None = None) -> dict[str, Any
         "properties": {
             "tools": {
                 "type": "array",
-                "description": "List of tools matching the query."
+                "items": {
+                    "type": "object",
+                },
+                "description": "Tools whose names match the query string, returned as an array. Array may be empty."
             }
-        }
+        },
+        "required": ["tools"]
     }
 )
 def search_tools(query: str) -> dict[str, Any]:
-    """
-    Search for tools in Galaxy
-
-    Args:
-        query: Search query (tool name to filter on)
-
-    Returns:
-        List of tools matching the query
-    """
+    """Search for tools in Galaxy by name."""
     ensure_connected()
 
     try:
         # The get_tools method is used with name filter parameter
-        tools = galaxy_state["gi"].tools._get(params={"q":"name:rnaseq OR name:assembly"})
+        tools = galaxy_state["gi"].tools.get_tools(name=query)
         return {"tools": tools}
     except Exception as e:
         raise ValueError(format_error("Search tools", e, {"query": query})) from e
@@ -260,7 +247,7 @@ def search_tools(query: str) -> dict[str, Any]:
 
 @mcp.tool(
     name="get_tool_details",
-    description="Retrieve detailed information about a specific Galaxy tool.",
+    description="Retrieve detailed information for a Galaxy tool identified by tool_id.",
     tags={"galaxy", "tools", "metadata", "details"},
     annotations={
         "readOnlyHint": True,
@@ -272,11 +259,11 @@ def search_tools(query: str) -> dict[str, Any]:
             "properties": {
                 "tool_id": {
                 "type": "string",
-                "description": ""
+                "description": "Unique Galaxy tool identifier. Typically obtained from search_tools."
                 },
                 "io_details": {
                 "type": "boolean",
-                "description": "",
+                "description": "Whether to include input and output parameter information.",
                 "default": False
                 }
             },
@@ -290,39 +277,96 @@ def search_tools(query: str) -> dict[str, Any]:
     output_schema={
         "type": "object",
         "properties": {
-            "model_class": {"type": "string", "description": "Galaxy model class, typically 'Tool'."},
-            "id": {"type": "string", "description": "Unique Galaxy tool identifier."},
-            "name": {"type": "string", "description": "Human-readable name of the tool."},
-            "version": {"type": "string", "description": "Tool version string."},
-            "description": {"type": "string", "description": "Tool description."},
-            "labels": {"type": "array", "items": {"type": "string"}, "description": "List of labels attached to the tool."},
-            "edam_operations": {"type": "array", "items": {"type": "string"}, "description": "EDAM operation terms."},
-            "edam_topics": {"type": "array", "items": {"type": "string"}, "description": "EDAM topic terms."},
-            "is_workflow_compatible": {"type": "boolean", "description": "Whether the tool is workflow compatible."},
-            "xrefs": {"type": "array", "items": {"type": "object"}, "description": "External references associated with the tool."},
-            "inputs": {"type": "array", "items": {"type": "object"}, "description": "List of tool input parameters with metadata."},
-            "outputs": {"type": "array", "items": {"type": "object"}, "description": "List of tool output definitions with metadata."}
-        },
-        "required": ["model_class", "id", "name"]
+            "model_class": {
+                "type": "string", 
+                "description": "Galaxy model class. Typically 'Tool'."
+            },
+            "id": {
+                "type": "string", 
+                "description": "Unique Galaxy tool identifier."
+            },
+            "name": {
+                "type": "string", 
+                "description": "Human-readable tool name"},
+            "version": {
+                "type": "string", 
+                "description": "Version of the tool."
+            },
+            "description": {
+                "type": "string", 
+                "description": "Tool description."
+            },
+            "icon": {
+                "type": ["string", "null"], 
+                "description": "Icon URL, if available."
+            },
+            "labels": {
+                "type": "array", 
+                "items": {"type": "string"}, 
+                "description": "List of labels associated with the tool."
+            },
+            "edam_operations": {
+                "type": "array", 
+                "items": {"type": "string"}, 
+                "description": "List of EDAM operation terms."
+            },
+            "edam_topics": {
+                "type": "array", 
+                "items": {"type": "string"}, 
+                "description": "List of EDAM topic terms."
+            },
+            "hidden": {
+                "type": "string", 
+                "description": "Hidden flag, if any."
+            },
+            "is_workflow_compatible": {
+                "type": "boolean", 
+                "description": "Whether the tool is workflow compatible."
+            },
+            "xrefs": {
+                "type": "array", 
+                "items": {"type": "object"},
+                "description": "External references associated with the tool."
+            },
+            "tool_shed_repository": {
+                "type": "object", 
+                "description": "Tool shed repository information."
+            },
+            "inputs": {
+                "type": "array", 
+                "items": {"type": "object"}, 
+                "description": "Tool input parameter definitions. Included when io_details is true."
+            },
+            "outputs": {
+                "type": "array", 
+                "items": {"type": "object"}, 
+                "description": "LTool output definitions. Included when io_details is true."
+            },
+            "panel_section_id": {
+                "type": "string", 
+                "description": "Tool panel section identifier."
+            },
+            "panel_section_name": {
+                "type": "string", 
+                "description": "Tool panel section name."
+            },
+            "form_style": {
+                "type": "string", 
+                "description": "Form style used for tool parameters."
+            }
+        }
     }
 )
 def get_tool_details(tool_id: str, io_details: bool = False) -> dict[str, Any]:
-    """
-    Get detailed information about a specific tool
+    """Retrieve detailed metadata for a Galaxy tool"""
 
-    Args:
-        tool_id: ID of the tool
-        io_details: Whether to include input/output details
-
-    Returns:
-        Tool details
-    """
     ensure_connected()
 
     try:
         # Get detailed information about the tool
         tool_info = galaxy_state["gi"].tools.show_tool(tool_id, io_details=io_details)
         for tool in tool_info:
+            # TODO: Remove unnecessary attributes: icon, hidden, form style
             ...
         return tool_info
     except Exception as e:
@@ -333,8 +377,8 @@ def get_tool_details(tool_id: str, io_details: bool = False) -> dict[str, Any]:
 
 @mcp.tool(
     name="get_tool_citations",
-    description="Retrieve citation metadata for a specific Galaxy tool, including description, DOI links, and authors.",
-    tags={"tools", "citations", "metadata"},
+    description="Retrieve citation information for a Galaxy tool identified by tool ID.",
+    tags={"tools", "citations"},
     annotations={
         "readOnlyHint": True,
         "destructiveHint": False,
@@ -345,7 +389,7 @@ def get_tool_details(tool_id: str, io_details: bool = False) -> dict[str, Any]:
             "properties": {
                 "tool_id": {
                 "type": "string",
-                "description": ""
+                "description": "Unique Galaxy tool identifier. Typically obtained from search_tools."
                 }
             },
             "required": ["tool_id"]
@@ -360,7 +404,7 @@ def get_tool_details(tool_id: str, io_details: bool = False) -> dict[str, Any]:
         "properties": {
             "tool_name": {
                 "type": "string",
-                "description": "The human-readable name of the tool."
+                "description": "Human-readable tool name."
             },
             "tool_version": {
                 "type": "string",
@@ -369,22 +413,14 @@ def get_tool_details(tool_id: str, io_details: bool = False) -> dict[str, Any]:
             "citations": {
                 "type": "array",
                 "items": {"type": "object"},
-                "description": "List of citation objects returned by Galaxy."
+                "description": "Citation metadata objects associated with the tool, returned as an array. May be empty."
             }
         },
         "required": ["tool_name", "tool_version", "citations"]
     },
 )
 def get_tool_citations(tool_id: str) -> dict[str, Any]:
-    """
-    Get citation information for a specific tool
-
-    Args:
-        tool_id: ID of the tool
-
-    Returns:
-        Tool citation information
-    """
+    """Retrieve citation for a Galaxy tool by tool ID."""
     ensure_connected()
 
     try:
